@@ -1,20 +1,41 @@
 import { model, ErrorStatus } from "@/model.js";
-import { API_LAST_CBOM_URL, API_CHECK_POLICY, API_CHECK_POLICY_NAME } from "@/app.config";
+import { API_SCANS_URL, API_CHECK_POLICY, API_CHECK_POLICY_NAME } from "@/app.config";
 import { checkValidComplianceResults, createLocalComplianceReport, isViewerOnly } from "@/helpers.js";
 
 
-export function fetchLastCboms(number) {
-  let apiUrl = `${API_LAST_CBOM_URL}/${number}`;
-  fetchDataFromApi(apiUrl, null)
+// Identifies the most recent page request. Responses can arrive out of order when the user
+// clicks through pages quickly, so anything but the newest response is discarded.
+let latestScansRequest = 0;
+
+export function fetchCbomsPage(page, limit) {
+  let apiUrl = `${API_SCANS_URL}?page=${page}&limit=${limit}`;
+  const requestId = ++latestScansRequest;
+  model.scans.loading = true;
+  return fetchDataFromApi(apiUrl, null)
     .then((jsonData) => {
-      model.lastCboms = jsonData;
-      if (Array.isArray(jsonData) && jsonData.length === 0) {
+      if (requestId !== latestScansRequest) {
+        return;
+      }
+      model.lastCboms = jsonData.data;
+      // the server clamps out-of-range values, so echo back what it actually used
+      model.scans.page = jsonData.page;
+      model.scans.limit = jsonData.limit;
+      model.scans.totalPages = jsonData.totalPages;
+      model.scans.totalElements = jsonData.totalElements;
+      if (jsonData.totalElements === 0) {
         model.addError(ErrorStatus.EmptyDatabase);
       }
     })
     .catch((error) => {
       console.error("Error:", error.message);
-      model.addError(ErrorStatus.NoConnection);
+      if (requestId === latestScansRequest) {
+        model.addError(ErrorStatus.NoConnection);
+      }
+    })
+    .finally(() => {
+      if (requestId === latestScansRequest) {
+        model.scans.loading = false;
+      }
     });
 }
 

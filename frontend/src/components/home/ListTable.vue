@@ -3,7 +3,7 @@
     <cv-data-table-skeleton
       v-if="model.lastCboms.length === 0"
       :columns="columns.slice(0, 2)"
-      :rows="numberOfLines"
+      :rows="model.scans.limit"
     >
     </cv-data-table-skeleton>
     <cv-data-table :columns="columns" v-else>
@@ -41,13 +41,25 @@
         </cv-data-table-row>
       </template>
     </cv-data-table>
+    <!--
+      Always rendered: its mount emits the initial `change`, which drives the first fetch.
+      Deliberately no `:page` binding — the pagination owns the current page. Feeding it back
+      a page that this component also updates from the response creates a loop: the prop change
+      moves the inner select, which re-emits `change`, which fetches again.
+    -->
+    <cv-pagination
+      :number-of-items="model.scans.totalElements"
+      :actual-items-on-page="model.lastCboms.length"
+      :page-sizes="pageSizes"
+      @change="onPaginationChange"
+    />
   </div>
 </template>
 
 <script>
 import {model} from "@/model";
 import {
-  fetchLastCboms,
+  fetchCbomsPage,
   getCbomFromScan,
   getDetectionsFromCbom,
   limitString,
@@ -64,7 +76,11 @@ export default {
       ArrowRight24,
       Launch16,
       columns: ["Most recent scans", "Date of scan", ""],
-      numberOfLines: 5,
+      pageSizes: [5, 10, 20],
+      // last values actually requested, so the pagination's mount-time emit and any
+      // repeated emit for the same page do not trigger a duplicate fetch
+      requestedPage: null,
+      requestedLimit: null,
     };
   },
   methods: {
@@ -92,13 +108,17 @@ export default {
       return `${day}/${month}/${year}`;
     },
     openGitRepo,
+    onPaginationChange: function ({ page, length }) {
+      if (page === this.requestedPage && length === this.requestedLimit) {
+        return;
+      }
+      this.requestedPage = page;
+      this.requestedLimit = length;
+      fetchCbomsPage(page, length);
+    },
     test: function () {
 
     },
-  },
-  beforeMount() {
-    // Executed on page load
-    fetchLastCboms(this.numberOfLines);
   },
 };
 </script>

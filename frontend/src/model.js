@@ -37,6 +37,14 @@ export const model = reactive({
   policyCheckResult: null,
   errors: [],
   lastCboms: [],
+  // pagination state for the scans table, mirrors the /api/v1/cbom/scans envelope
+  scans: {
+    page: 1,
+    limit: 5,
+    totalPages: 0,
+    totalElements: 0,
+    loading: true,
+  },
 
   // METHODS
   startAgain() {
