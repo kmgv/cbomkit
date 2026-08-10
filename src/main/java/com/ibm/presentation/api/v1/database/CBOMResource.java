@@ -25,6 +25,7 @@ import com.ibm.usecases.database.commands.StoreCBOMCommand;
 import com.ibm.usecases.database.errors.NoCBOMForProjectIdentifierFound;
 import com.ibm.usecases.database.queries.DeleteCBOMByProjectIdentifierQuery;
 import com.ibm.usecases.database.queries.GetCBOMByProjectIdentifierQuery;
+import com.ibm.usecases.database.queries.ListPagedCBOMsQuery;
 import com.ibm.usecases.database.queries.ListStoredCBOMsQuery;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
@@ -35,6 +36,7 @@ import jakarta.ws.rs.core.Response;
 import java.util.concurrent.ExecutionException;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.jboss.resteasy.reactive.RestPath;
+import org.jboss.resteasy.reactive.RestQuery;
 
 @Path("/api/v1/cbom")
 @ApplicationScoped
@@ -62,6 +64,25 @@ public class CBOMResource {
         return this.queryBus
                 .send(new ListStoredCBOMsQuery(limit))
                 .thenApply(readModels -> Response.ok(readModels).build())
+                .get();
+    }
+
+    @GET
+    @Path("/scans")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Operation(
+            summary = "Return a page of generated CBOMs from the repository",
+            description =
+                    "Returns one page of the most recently generated CBOMs, newest first, "
+                            + "wrapped in an object that also reports the total number of pages "
+                            + "so a pager can be rendered. The 1-based 'page' parameter defaults "
+                            + "to 1 and the 'limit' parameter defaults to 5 (capped at 100). "
+                            + "Out-of-range values are clamped rather than rejected.")
+    public Response getScans(@RestQuery @Nullable Integer page, @RestQuery @Nullable Integer limit)
+            throws ExecutionException, InterruptedException {
+        return this.queryBus
+                .send(new ListPagedCBOMsQuery(page, limit))
+                .thenApply(pagedCBOMs -> Response.ok(pagedCBOMs).build())
                 .get();
     }
 

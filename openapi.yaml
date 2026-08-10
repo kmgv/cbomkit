@@ -32,6 +32,30 @@ paths:
           description: OK
       tags:
       - CBOM Resource
+  /api/v1/cbom/scans:
+    get:
+      summary: Return a page of generated CBOMs from the repository
+      description: "Returns one page of the most recently generated CBOMs, newest\
+        \ first, wrapped in an object that also reports the total number of pages\
+        \ so a pager can be rendered. The 1-based 'page' parameter defaults to 1 and\
+        \ the 'limit' parameter defaults to 5 (capped at 100). Out-of-range values\
+        \ are clamped rather than rejected."
+      parameters:
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          format: int32
+      - name: page
+        in: query
+        schema:
+          type: integer
+          format: int32
+      responses:
+        "200":
+          description: OK
+      tags:
+      - CBOM Resource
   /api/v1/cbom/{projectIdentifier}:
     post:
       parameters:

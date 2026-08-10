@@ -32,6 +32,7 @@ import jakarta.annotation.Nullable;
 import jakarta.inject.Singleton;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.TypedQuery;
+import jakarta.transaction.Status;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.List;
@@ -95,6 +96,64 @@ public final class CBOMReadRepository extends ReadRepository<UUID, CBOMReadModel
             container.requestContext().terminate();
         }
         return List.of();
+    }
+
+    @Override
+    public @Nonnull Collection<CBOMReadModel> getRecentPaged(int offset, int limit) {
+        final EntityManager entityManager = CBOMReadModel.getEntityManager();
+        final ArcContainer container = Arc.container();
+        container.requestContext().activate();
+        try {
+            QuarkusTransaction.begin();
+            // the secondary sort keeps paging stable: createdAt alone is not unique, and an
+            // unstable order lets a row show up on two pages or on none at all
+            final List<CBOMReadModel> match =
+                    entityManager
+                            .createQuery(
+                                    "SELECT DISTINCT read FROM CBOMReadModel read"
+                                            + " WHERE read.createdAt = ( SELECT MAX(r.createdAt) FROM CBOMReadModel r WHERE r.repository = read.repository )"
+                                            + " ORDER BY read.createdAt DESC, read.repository ASC",
+                                    CBOMReadModel.class)
+                            .setFirstResult(offset)
+                            .setMaxResults(limit)
+                            .getResultList();
+            QuarkusTransaction.commit();
+            return match;
+        } catch (Exception e) {
+            LOGGER.error(e.getMessage(), e);
+            if (QuarkusTransaction.getStatus() != Status.STATUS_NO_TRANSACTION) {
+                QuarkusTransaction.rollback();
+            }
+        } finally {
+            container.requestContext().terminate();
+        }
+        return List.of();
+    }
+
+    @Override
+    public long countRecentRepositories() {
+        final EntityManager entityManager = CBOMReadModel.getEntityManager();
+        final ArcContainer container = Arc.container();
+        container.requestContext().activate();
+        try {
+            QuarkusTransaction.begin();
+            final Long count =
+                    entityManager
+                            .createQuery(
+                                    "SELECT COUNT(DISTINCT read.repository) FROM CBOMReadModel read",
+                                    Long.class)
+                            .getSingleResult();
+            QuarkusTransaction.commit();
+            return count == null ? 0L : count;
+        } catch (Exception e) {
+            LOGGER.error(e.getMessage(), e);
+            if (QuarkusTransaction.getStatus() != Status.STATUS_NO_TRANSACTION) {
+                QuarkusTransaction.rollback();
+            }
+        } finally {
+            container.requestContext().terminate();
+        }
+        return 0L;
     }
 
     @Override

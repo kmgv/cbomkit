@@ -52,4 +52,22 @@ public interface ICBOMReadRepository extends IReadRepository<UUID, CBOMReadModel
 
     @Nonnull
     Collection<CBOMReadModel> getRecent(int limit);
+
+    /**
+     * Returns a page of the most recent CBOMs, one per repository, newest first.
+     *
+     * @param offset the number of rows to skip.
+     * @param limit the maximum number of rows to return.
+     * @return CBOM read models for the requested page, empty if the offset is past the end.
+     */
+    @Nonnull
+    Collection<CBOMReadModel> getRecentPaged(int offset, int limit);
+
+    /**
+     * Returns the total number of repositories with at least one stored CBOM, i.e. the number of
+     * rows {@link #getRecentPaged(int, int)} pages over.
+     *
+     * @return the total row count.
+     */
+    long countRecentRepositories();
 }
