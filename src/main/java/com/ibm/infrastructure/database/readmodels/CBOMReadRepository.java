@@ -74,20 +74,22 @@ public final class CBOMReadRepository extends ReadRepository<UUID, CBOMReadModel
         container.requestContext().activate();
         try {
             QuarkusTransaction.begin();
-            final List<CBOMReadModel> match = entityManager
-                    .createQuery(
-                            "SELECT DISTINCT read FROM CBOMReadModel read"
-                                    + " WHERE read.createdAt = ( SELECT MAX(r.createdAt) FROM CBOMReadModel r WHERE r.repository = read.repository )"
-                                    + " ORDER BY read.createdAt DESC"
-                                    + " LIMIT :limit",
-                            CBOMReadModel.class)
-                    .setParameter("limit", limit)
-                    .getResultList();
+            final List<CBOMReadModel> match =
+                    entityManager
+                            .createQuery(
+                                    "SELECT DISTINCT read FROM CBOMReadModel read"
+                                            + " WHERE read.createdAt = ( SELECT MAX(r.createdAt) FROM CBOMReadModel r WHERE r.repository = read.repository )"
+                                            + " ORDER BY read.createdAt DESC"
+                                            + " LIMIT :limit",
+                                    CBOMReadModel.class)
+                            .setParameter("limit", limit)
+                            .getResultList();
             QuarkusTransaction.commit();
             return match;
         } catch (Exception e) {
             LOGGER.error(e.getMessage(), e);
-            if (QuarkusTransaction.getStatus() != 6) { // https://github.com/quarkusio/quarkus/wiki/Migration-Guide-3.22#quarkustransactionisactive-deprecated
+            if (QuarkusTransaction.getStatus()
+                    != 6) { // https://github.com/quarkusio/quarkus/wiki/Migration-Guide-3.22#quarkustransactionisactive-deprecated
                 QuarkusTransaction.rollback();
             }
         } finally {
@@ -105,15 +107,16 @@ public final class CBOMReadRepository extends ReadRepository<UUID, CBOMReadModel
             QuarkusTransaction.begin();
             // the secondary sort keeps paging stable: createdAt alone is not unique, and an
             // unstable order lets a row show up on two pages or on none at all
-            final List<CBOMReadModel> match = entityManager
-                    .createQuery(
-                            "SELECT DISTINCT read FROM CBOMReadModel read"
-                                    + " WHERE read.createdAt = ( SELECT MAX(r.createdAt) FROM CBOMReadModel r WHERE r.repository = read.repository )"
-                                    + " ORDER BY read.createdAt DESC, read.id ASC",
-                            CBOMReadModel.class)
-                    .setFirstResult(offset)
-                    .setMaxResults(limit)
-                    .getResultList();
+            final List<CBOMReadModel> match =
+                    entityManager
+                            .createQuery(
+                                    "SELECT DISTINCT read FROM CBOMReadModel read"
+                                            + " WHERE read.createdAt = ( SELECT MAX(r.createdAt) FROM CBOMReadModel r WHERE r.repository = read.repository )"
+                                            + " ORDER BY read.createdAt DESC, read.id ASC",
+                                    CBOMReadModel.class)
+                            .setFirstResult(offset)
+                            .setMaxResults(limit)
+                            .getResultList();
             QuarkusTransaction.commit();
             return match;
         } catch (Exception e) {
@@ -134,11 +137,12 @@ public final class CBOMReadRepository extends ReadRepository<UUID, CBOMReadModel
         container.requestContext().activate();
         try {
             QuarkusTransaction.begin();
-            final Long count = entityManager
-                    .createQuery(
-                            "SELECT COUNT(DISTINCT read.repository) FROM CBOMReadModel read",
-                            Long.class)
-                    .getSingleResult();
+            final Long count =
+                    entityManager
+                            .createQuery(
+                                    "SELECT COUNT(DISTINCT read.repository) FROM CBOMReadModel read",
+                                    Long.class)
+                            .getSingleResult();
             QuarkusTransaction.commit();
             return count == null ? 0L : count;
         } catch (Exception e) {
@@ -159,13 +163,14 @@ public final class CBOMReadRepository extends ReadRepository<UUID, CBOMReadModel
         container.requestContext().activate();
         try {
             QuarkusTransaction.begin();
-            final Optional<CBOMReadModel> cbomReadModel = Optional
-                    .ofNullable(entityManager.find(CBOMReadModel.class, uuid));
+            final Optional<CBOMReadModel> cbomReadModel =
+                    Optional.ofNullable(entityManager.find(CBOMReadModel.class, uuid));
             QuarkusTransaction.commit();
             return cbomReadModel;
         } catch (Exception e) {
             LOGGER.error(e.getMessage(), e);
-            if (QuarkusTransaction.getStatus() != 6) { // https://github.com/quarkusio/quarkus/wiki/Migration-Guide-3.22#quarkustransactionisactive-deprecated
+            if (QuarkusTransaction.getStatus()
+                    != 6) { // https://github.com/quarkusio/quarkus/wiki/Migration-Guide-3.22#quarkustransactionisactive-deprecated
                 QuarkusTransaction.rollback();
             }
         } finally {
@@ -181,7 +186,8 @@ public final class CBOMReadRepository extends ReadRepository<UUID, CBOMReadModel
         container.requestContext().activate();
         try {
             QuarkusTransaction.begin();
-            final CBOMReadModel existing = entityManager.find(CBOMReadModel.class, cbomReadModel.getId());
+            final CBOMReadModel existing =
+                    entityManager.find(CBOMReadModel.class, cbomReadModel.getId());
             if (existing == null) {
                 entityManager.persist(cbomReadModel);
             } else {
@@ -190,7 +196,8 @@ public final class CBOMReadRepository extends ReadRepository<UUID, CBOMReadModel
             QuarkusTransaction.commit();
         } catch (Exception e) {
             LOGGER.error(e.getMessage(), e);
-            if (QuarkusTransaction.getStatus() != 6) { // https://github.com/quarkusio/quarkus/wiki/Migration-Guide-3.22#quarkustransactionisactive-deprecated
+            if (QuarkusTransaction.getStatus()
+                    != 6) { // https://github.com/quarkusio/quarkus/wiki/Migration-Guide-3.22#quarkustransactionisactive-deprecated
                 QuarkusTransaction.rollback();
             }
         } finally {
@@ -205,13 +212,14 @@ public final class CBOMReadRepository extends ReadRepository<UUID, CBOMReadModel
         container.requestContext().activate();
         try {
             QuarkusTransaction.begin();
-            final Optional<CBOMReadModel> cbomReadModel = Optional
-                    .ofNullable(entityManager.find(CBOMReadModel.class, uuid));
+            final Optional<CBOMReadModel> cbomReadModel =
+                    Optional.ofNullable(entityManager.find(CBOMReadModel.class, uuid));
             cbomReadModel.ifPresent(entityManager::remove);
             QuarkusTransaction.commit();
         } catch (Exception e) {
             LOGGER.error(e.getMessage(), e);
-            if (QuarkusTransaction.getStatus() != 6) { // https://github.com/quarkusio/quarkus/wiki/Migration-Guide-3.22#quarkustransactionisactive-deprecated
+            if (QuarkusTransaction.getStatus()
+                    != 6) { // https://github.com/quarkusio/quarkus/wiki/Migration-Guide-3.22#quarkustransactionisactive-deprecated
                 QuarkusTransaction.rollback();
             }
         } finally {
@@ -228,7 +236,8 @@ public final class CBOMReadRepository extends ReadRepository<UUID, CBOMReadModel
             QuarkusTransaction.begin();
 
             final StringBuilder queryBuilder = new StringBuilder();
-            final String baseQuery = "SELECT read FROM CBOMReadModel read WHERE read.repository = :repository";
+            final String baseQuery =
+                    "SELECT read FROM CBOMReadModel read WHERE read.repository = :repository";
             queryBuilder.append(baseQuery);
 
             if (commit != null) {
@@ -240,9 +249,10 @@ public final class CBOMReadRepository extends ReadRepository<UUID, CBOMReadModel
             // set order
             queryBuilder.append(" ORDER BY createdAt desc");
 
-            final TypedQuery<CBOMReadModel> query = entityManager
-                    .createQuery(queryBuilder.toString(), CBOMReadModel.class)
-                    .setParameter("repository", repository);
+            final TypedQuery<CBOMReadModel> query =
+                    entityManager
+                            .createQuery(queryBuilder.toString(), CBOMReadModel.class)
+                            .setParameter("repository", repository);
 
             if (commit != null) {
                 query.setParameter("commit", commit.hash());
@@ -255,7 +265,8 @@ public final class CBOMReadRepository extends ReadRepository<UUID, CBOMReadModel
             return match;
         } catch (Exception e) {
             LOGGER.error(e.getMessage(), e);
-            if (QuarkusTransaction.getStatus() != 6) { // https://github.com/quarkusio/quarkus/wiki/Migration-Guide-3.22#quarkustransactionisactive-deprecated
+            if (QuarkusTransaction.getStatus()
+                    != 6) { // https://github.com/quarkusio/quarkus/wiki/Migration-Guide-3.22#quarkustransactionisactive-deprecated
                 QuarkusTransaction.rollback();
             }
         } finally {
@@ -271,14 +282,16 @@ public final class CBOMReadRepository extends ReadRepository<UUID, CBOMReadModel
         container.requestContext().activate();
         try {
             QuarkusTransaction.begin();
-            String qString = commit != null
-                    ? "SELECT read FROM CBOMReadModel read WHERE read.commit = :commit AND read.projectIdentifier = :projectIdentifier"
-                    : "SELECT read FROM CBOMReadModel read WHERE read.projectIdentifier = :projectIdentifier";
+            String qString =
+                    commit != null
+                            ? "SELECT read FROM CBOMReadModel read WHERE read.commit = :commit AND read.projectIdentifier = :projectIdentifier"
+                            : "SELECT read FROM CBOMReadModel read WHERE read.projectIdentifier = :projectIdentifier";
             qString += " ORDER BY createdAt desc";
 
-            TypedQuery<CBOMReadModel> query = entityManager
-                    .createQuery(qString, CBOMReadModel.class)
-                    .setParameter("projectIdentifier", projectIdentifier);
+            TypedQuery<CBOMReadModel> query =
+                    entityManager
+                            .createQuery(qString, CBOMReadModel.class)
+                            .setParameter("projectIdentifier", projectIdentifier);
 
             if (commit != null) {
                 query.setParameter("commit", commit.hash());
@@ -288,7 +301,8 @@ public final class CBOMReadRepository extends ReadRepository<UUID, CBOMReadModel
             return match;
         } catch (Exception e) {
             LOGGER.error(e.getMessage(), e);
-            if (QuarkusTransaction.getStatus() != 6) { // https://github.com/quarkusio/quarkus/wiki/Migration-Guide-3.22#quarkustransactionisactive-deprecated
+            if (QuarkusTransaction.getStatus()
+                    != 6) { // https://github.com/quarkusio/quarkus/wiki/Migration-Guide-3.22#quarkustransactionisactive-deprecated
                 QuarkusTransaction.rollback();
             }
         } finally {
